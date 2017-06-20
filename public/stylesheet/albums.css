@@ -1,0 +1,190 @@
+@import url(https://fonts.googleapis.com/css?family=Montserrat:400,700);
+
+body {
+	font-family: "Montserrat", sans-serif !important;
+	margin: 0px;
+	padding: 0px;
+}
+
+#album-header {
+	position: fixed;
+	top: 0px;
+	left: 0px;
+  text-align: center;
+  z-index: 100;
+	height: 60px;
+	width: 100vw;
+	background-color: #d002ab;
+	box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+#album-header a {
+  font-size: 40px;
+  position: absolute;
+  left: 20px;
+  top: 1px;
+  color: #ffffff;
+  pointer-events: none;
+}
+
+#noAlbum {
+	display: table;
+	height: calc(100vh - 60px);
+	width: 100vw;
+	margin-top: 60px;
+	background-color: #f8f8f8;
+}
+
+#album-box {
+	margin-top: 60px;
+}
+
+#albums-list {
+	padding: 30px;
+  margin-top: 110px;
+}
+
+#album-box-header {
+  z-index: 100;
+  position: fixed;
+  background-color: #ffffff;
+  height: 50px;
+  top: 60px;
+  width: 100vw;
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.2);
+  margin-bottom: 20px;
+}
+
+#createAlbum {
+	box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+#createAlbum:hover {
+	box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+button:focus {
+	outline: 0px !important;
+	text-decoration: none !important;
+}
+
+.hovered {
+	height: 100% !important;
+	border-radius: 10px !important;
+}
+
+.hovered button {
+  display: block !important;
+}
+
+.album-img-box {
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    border: 1px solid #ececec;
+    border-radius: 10px;
+    height: 250px;
+    position: relative;
+    width: 100%;
+    cursor: pointer;
+}
+
+.album-info-box {
+	position: absolute;
+    bottom: 0px;
+    width: 100%;
+    height: 50px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #ffffff;
+    border-radius: 0px 0px 10px 10px;
+    padding-left: 10px;
+    padding-top: 7px;
+}
+
+.group { 
+  position: relative;
+  margin-bottom: 30px;
+  margin-left: 5px;
+  display: inline-block;
+}
+
+.group p {
+    display: none;
+    position: absolute;
+    top: 35px;
+    width: 100%;
+    text-align: center;
+    font-size: 11px;
+    color: red;
+}
+
+.group input {
+  font-size:16px;
+  font-weight: 400;
+  padding-top:12px; 
+  display:block;
+  width: 310px;
+  border:none;
+  border-bottom:1px solid #cbcbcb;
+}
+.group input:focus { 
+  outline:none; 
+}
+
+.group input:-webkit-autofill,
+.group input:-webkit-autofill:hover,
+.group input:-webkit-autofill:focus,
+.group input:-webkit-autofill:active {
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.group label {
+  color:#999; 
+  font-size:18px;
+  font-weight:normal;
+  position:absolute;
+  pointer-events:none;
+  left: 0px;
+  top: 10px;
+  transition:0.2s ease all; 
+  -moz-transition:0.2s ease all; 
+  -webkit-transition:0.2s ease all;
+}
+
+.group input:focus ~ label, .group input:valid ~ label {
+  top: -5px;
+  font-size: 11px;
+}
+
+.modal-backdrop.in  {
+	height: 100% !important;
+  z-index: 900 !important;
+}
+
+#title {
+  color: #ffffff;
+  font-size: 28px;
+  margin-top: 11px;
+}
+
+.album-delete {
+  pointer-events: auto;
+  background-color: transparent;
+  border: 0px;
+  font-size: 22px;
+  position: absolute;
+  right: 0px;
+  margin-right: 10px;
+  display: none;
+  bottom: 6px;
+  color: #ffffff;
+}
+
+@media screen and (max-width: 450px) {
+  .album-item {
+    width: 100% !important;
+  }
+
+  #title {
+    margin-left: 40px;
+  }
+} 

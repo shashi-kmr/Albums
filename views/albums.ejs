@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Photo Gallery</title>
+  <!-- Tell the browser to be responsive to screen width -->
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/simple-line-icons/2.4.1/css/simple-line-icons.min.css">
+  <link rel="stylesheet" href="/stylesheet/albums.css">
+  <link rel="stylesheet" href="/libs/bootstrap.min.css">
+  <script src="/libs/angular/angular.min.js"></script>
+  <script src="/libs/angular//angular-sanitize.min.js"></script>
+  <script src="/libs/jquery.min.js"></script>
+  <script src="/libs/bootstrap.min.js"></script>
+  <script src="/js/albums.js"></script>
+</head>
+<body>
+<div class="wrapper">
+  <div id="album-header">
+    <a href="/"><i class="fa fa-picture-o" id="home" ></i></a>
+    <label id="title">My Photo Gallery</label>
+  </div>
+  <section class="content" ng-app="albumApp" ng-controller="albumAppCtl" style="padding-top: 0px;">
+    <div class="modal fade" id="alert-disc" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog" style="width: 310px">
+        <div class="modal-content">
+          <div class="modal-header" style="padding-bottom: 20px;">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true" style="font-size: 30px; margin-top: -12px;">&times;</button>
+          </div>
+          <div class="modal-body" style="padding: 20px; text-align: center;">
+            Are you sure, you want to delete Album <br><span style="color: red">{{albumdel.name}}</span>
+            <br>
+            <p style="color: red; margin-top: 10px; font-size: 11px;">(Please Note: It will delete all the images belonging to this Album)</p>
+            <button class="btn btn-danger" style="margin-top: 20px;" ng-click="deleteAlbum()">YES</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="album-disc" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog" style="width: 350px;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title">Please Provide Album Name.</h4>
+          </div>
+          <div class="modal-body">
+            <div class="group" style="margin-top: 10px; margin-bottom: 80px;">
+              <input type="text" id="album-name" name="album-name" ng-model="album.name" required style="text-transform: uppercase; " />
+              <label>Album Name *</label>
+              <p style="display: none">Enter Album Name </p>
+            </div>
+            <button id="submit" ng-click="createAlbum()" style="width: 200px;height: 38px;font-size: 15px;left: 75px;border-radius: 5px;bottom: 10px;position: absolute;border: 0px;font-weight: 700;color: #ffffff;background-color: rgb(193, 22, 24);">CREATE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="noAlbum" ng-if="albums.length == 0" ng-cloak>
+      <div style="position: relative; width: 100%; text-align: center; vertical-align: middle; display: table-cell;">
+      <label style="color: red;font-size: 17px;font-weight: 400;">You don't have any album<br> Please Create one !!</label>
+      <br><br>
+      <button id="createAlbum" class="btn btn-success" ng-click="showAlbumModal()">Create Album</button>
+      </div>
+    </div>
+    <div id="album-box" ng-if="albums.length > 0" ng-cloak>
+      <div id="album-box-header">
+        <button id="createNewAlbum" class="btn btn-success" ng-click="showAlbumModal()" style="float: right; margin: 10px 20px;">Create New Album</button>
+      </div>
+      <div id="albums-list">
+        <div class="col-md-3 col-sm-4 col-xs-6 album-item" ng-repeat="a in albums" style="margin-top: 20px;">
+          <div class="album-img-box" ng-style="getImgBoxStyle(a)" ng-mouseover="hoverOnAlbum($event)" ng-mouseleave="onAlbumLeave($event)" ng-click="redirectToAlbumImage(a)" >
+            <div class="album-info-box">
+              <span class="album-name" style="font-size: 17px;float: left;">{{a.name}}</span>
+              <span class="album-image-count" style="float: right; margin-right: 10px;">{{a.images.length}} images</span>
+              <button class="album-delete" ng-click="showAlbumDeleteModal(a._id, a.name)"><i class="fa fa-trash-o"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

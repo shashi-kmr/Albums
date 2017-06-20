@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Photo Gallery</title>
+  <!-- Tell the browser to be responsive to screen width -->
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/simple-line-icons/2.4.1/css/simple-line-icons.min.css">
+  <link rel="stylesheet" href="/stylesheet/image-viewer.css">
+  <link rel="stylesheet" href="/libs/bootstrap.min.css">
+  <script src="/libs/angular/angular.min.js"></script>
+  <script src="/libs/angular//angular-sanitize.min.js"></script>
+  <script src="/libs/angular//angular-lazyload.js"></script>
+  <script type="text/javascript" src="/js/img-uploader.js"></script>
+  <script src="/libs/jquery.min.js"></script>
+  <script src="/libs/bootstrap.min.js"></script>
+  <script type="text/javascript">
+    albumName = "<%= albumName %>"
+  </script>
+  <script src="/js/image-viewer.js"></script>
+</head>
+<body>
+<div class="wrapper">
+  <div class="spinner" style="display: none">
+    <div class="ball"></div>
+    <p>UPLOADING..</p>
+  </div>
+  <div id="ajax-popup-bg" style="position:fixed; top: 0px;width:100%; height:100%; z-index: 5040; background-color: rgba(0,0,0, 0.8); display: none"></div>
+  <div id="image-header">
+    <a href="/"><i class="fa fa-picture-o" id="home" ></i></a>
+    <label id="albumName"><%= albumName %></label>
+  </div>
+  <section class="content" ng-app="imageApp" ng-controller="imageAppCtl" style="padding-top: 0px;">
+    <div class="modal fade" id="alert-disc" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog" style="width: 310px">
+        <div class="modal-content">
+          <div class="modal-header" style="padding-bottom: 20px;">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true" style="font-size: 30px; margin-top: -12px;">&times;</button>
+          </div>
+          <div class="modal-body" style="padding: 20px; text-align: center;">
+            Are you sure, you want to delete image <br><span style="color: red">{{imagedel.name}}</span>
+            <br>
+            <button class="btn btn-danger" style="margin-top: 20px;" ng-click="deleteImage()">YES</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="image-disc" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog" style="width: 96%; max-width: 800px">
+        <div class="modal-content">
+          <div class="modal-header" style="padding-bottom: 20px;">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true" style="font-size: 30px; margin-top: -12px;">&times;</button>
+            <h4 class="modal-title"></h4>
+          </div>
+          <div class="modal-body" style="width: 100%; max-width: 800px; min-height: 450px; padding-right: 0px;">
+            <div class="col-md-7 col-sm-7" id="image-container" style="text-align: center; max-height: 425px; overflow-y: hidden;">
+              <img lazy-src="{{image.path}}" animate-visible="true" id="image-holder" />
+            </div>
+            <div class="col-md-5 col-sm-5" id="image-info-box">
+              <label id="image-name">{{image.name}}</label>
+              <p>Image Dimension: <b>{{image.metadata.dimension.width + "px"}} X {{image.metadata.dimension.height + "px"}}</b></p> 
+              <p>Image Size: <b>{{(image.metadata.size/1024 + "").split('.')[0]}}KB</b></p>
+              <a class="btn btn-primary" id="image-download-btn" download href="{{image.path}}">Download <i class="fa fa-download"></i></a>
+              <div id="more-info-box" style="text-align: right; margin-right: 0px; word-wrap: break-word; margin-top: 25px; color: #9b9b9b">
+                  More Info
+                  <br>
+                  <br>
+                  <p>Encoding: <b>{{image.metadata.encoding}}</b></p>
+                  <span ng-if="image.metadata.exifData">
+                    <p ng-if="image.metadata.exifData.image && image.metadata.exifData.image.Software">Software: <b>{{image.metadata.exifData.image.Software}}</b></p>
+                    <p ng-if="image.metadata.exifData.image && image.metadata.exifData.image.Copyright">Copyright: <b>{{image.metadata.exifData.image.Copyright}}</b></p>
+                    <p ng-if="image.metadata.exifData.exif && image.metadata.exifData.exif.LensModel">LensModel: <b>{{image.metadata.exifData.exif.LensModel}}</b></p>
+                  </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <input class="upload-img-file form-control" style="display: none" type="file" name="files" accept="image/*" onchange="angular.element(this).scope().ImgUpload(event)" />
+    <div id="noImage" ng-if="images.length == 0" ng-cloak>
+      <div style="position: relative; width: 100%; text-align: center; vertical-align: middle; display: table-cell;">
+      <label style="color: red;font-size: 17px;font-weight: 400;">There are no images in the Album <b><%= albumName %></b><br> Please Upload!!</label>
+      <br><br>
+      <button id="uploadImg" class="btn btn-success" ng-click="uploadImg()" >Upload Image &nbsp;&nbsp;<i class="fa fa-upload"></i></button>
+      </div>
+    </div>
+    <div id="image-box" ng-if="images.length > 0" ng-cloak>
+      <div id="image-box-header">
+        <button id="uploadImg" class="btn btn-success" ng-click="uploadImg()" style="float: right; margin: 8px 20px;">Upload Image &nbsp;&nbsp;<i class="fa fa-upload"></i></button>
+      </div>
+      <div id="image-list">
+        <div class="col-md-3 col-sm-4 col-xs-6 image-item" ng-repeat="i in images" ng-mouseover="imageHover($event)" ng-mouseleave="imageMLeave($event)">
+          <img src="{{i.path}}" height="100%" width="100%" ng-click="showImageModal(i)" />
+          <div class="image-action-div" style="display: none;">
+            <div class="image-name marqueed"><span>{{i.name}}</span></div>
+            <button id="image-delete" ng-click="showImageDeleteModal(i._id, i.namewithTimeStamp, i.name)"><i class="fa fa-trash-o"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>
