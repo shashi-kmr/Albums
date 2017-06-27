@@ -118,7 +118,7 @@ var albumApp = angular.module('albumApp', ['ngSanitize']).controller('albumAppCt
     	}).then(function(res) {
     		if(res.data) {
     			if(res.data.status == 1) {
-    				$scope.albums = $scope.albums.filter(function(i){return i._id != $scope.albumdel.id});
+    				$scope.albums = $scope.albums.filter(function(i){return i.name != $scope.albumdel.name});
     			}
     			jQuery('.modal').modal("hide");
     		}

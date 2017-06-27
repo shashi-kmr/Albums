@@ -4,11 +4,11 @@ var Schema = mongoose.Schema,
 
 var ImageSchema = new Schema({
 	name: {type: String},
-	namewithTimeStamp: {type: String},
+	namewithtimestamp: {type: String},
 	path: {type: String},
-	createdAt: {type: Date, default: Date.now()},
-	album: {type: ObjectId},
-	albumName: {type: String},
+	createdat: {type: Date, default: Date.now()},
+	album: {type: ObjectId, index: true},
+	albumname: {type: String, index: true},
 	metadata: {type: Object},
 });
 

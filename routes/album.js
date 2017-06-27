@@ -1,6 +1,8 @@
 var processArgs = process.argv.slice(2, process.argc);
+var postgresEnv = false;
 if(processArgs.indexOf('postgres') != -1) {
-	const pool = require('./lib/postgres');
+	postgresEnv = true;
+	var pool = require('./lib/postgres');
 } else {
 	var Albums = require('../models/album');
 	var Images = require('../models/image');
@@ -49,64 +51,94 @@ var getExifData = function(filename, callback) {
 
 module.exports = function(app) {
 	app.post('/image/delete', function(req, res) {
-		Images.remove({
-			_id: req.body.id,
-		}, function(err){
-			if(err) {
-				console.log(err);
-				return res.json({status: 0, msg: "Error while Removing Image from db"});
-			}
-
-			Albums.update({
-				name: req.body.albumName,
-			}, {
-				$pull: {
-					images: req.body.id,
-				}
-			}, function(err, result){
+		if(!postgresEnv) {
+			Images.remove({
+				_id: req.body.id,
+			}, function(err){
 				if(err) {
 					console.log(err);
 					return res.json({status: 0, msg: "Error while Removing Image from db"});
 				}
-				fs.removeSync('./public/images/'+ req.body.albumName + "/" + req.body.nameT);
 
-				return res.json({status: 1, msg: "Succefully deleted"});
+				Albums.update({
+					name: req.body.albumName,
+				}, {
+					$pull: {
+						images: req.body.id,
+					}
+				}, function(err, result){
+					if(err) {
+						console.log(err);
+						return res.json({status: 0, msg: "Error while Removing Image from db"});
+					}
+					fs.removeSync('./public/images/'+ req.body.albumName + "/" + req.body.nameT);
+
+					return res.json({status: 1, msg: "Succefully deleted"});
+				})
 			})
-		})
+		} else {
+			pool.query('DELETE FROM image WHERE _id = ' + req.body.id, function(err, result){
+				if(err) {
+					console.log(err);
+					return res.json({status: 0});
+				} else {
+					fs.removeSync('./public/images/'+ req.body.albumName + "/" + req.body.nameT);
+					return res.json({status: 1, msg: "Succefully deleted"});
+				}
+			})
+		}
 	});
 
 	app.post('/album/delete', function(req, res) {
-
-		Albums.findOne({
-			_id: req.body.id,
-		}, {
-			images: 1
-		}, function(err, album) {
-			if(err) {
-				console.log(err);
-				return res.json({status: 0});
-			}
-
-			Images.remove({
-				_id: {$in: album.images},
-			}, function(err) {
+		if(!postgresEnv) {
+			Albums.findOne({
+				_id: req.body.id,
+			}, {
+				images: 1
+			}, function(err, album) {
 				if(err) {
 					console.log(err);
-					return res.json({status: 0, msg: "Error while Removing Images from db"});
+					return res.json({status: 0});
 				}
 
-				Albums.remove({
-					_id: req.body.id,
-				}, function(err){
+				Images.remove({
+					_id: {$in: album.images},
+				}, function(err) {
 					if(err) {
 						console.log(err);
-						return res.json({status: 0, msg: "Error while Removing Album from db"});
+						return res.json({status: 0, msg: "Error while Removing Images from db"});
 					}
-					fs.removeSync('./public/images/'+ req.body.name + "/");
-					return res.json({status: 1, msg: "Succefully deleted"});
+
+					Albums.remove({
+						_id: req.body.id,
+					}, function(err){
+						if(err) {
+							console.log(err);
+							return res.json({status: 0, msg: "Error while Removing Album from db"});
+						}
+						fs.removeSync('./public/images/'+ req.body.name + "/");
+						return res.json({status: 1, msg: "Succefully deleted"});
+					});
 				});
-			});
-		})
+			})
+		} else {
+			pool.query("DELETE FROM image WHERE albumname = '" + req.body.name + "'", function(err, result){
+				if(err) {
+					console.log(err);
+					return res.json({status: 0});
+				} else {
+					pool.query("DELETE FROM Albums WHERE name = '" + req.body.name + "'", function(er, result2) {
+						if(er) {
+							console.log(er);
+							return res.json({status: 0});
+						} else {
+							fs.removeSync('./public/images/'+ req.body.name + "/");
+							return res.json({status: 1, msg: "Succefully deleted"});
+						}
+					})
+				}
+			})
+		}
 	});
 
 	app.post('/image/upload', upload, function(req, res) {
@@ -122,32 +154,52 @@ module.exports = function(app) {
 				imgMetadata.exifData = exifData;
 			}
 
-			var image = new Images({
-				namewithTimeStamp: req.file.filename,
-				name: req.file.originalname,
-				path: req.protocol + "://" + req.get('host') + req.file.destination.slice(8) + req.file.filename,
-				albumName: req.file.destination.split('/')[3],
-				metadata: imgMetadata,
-			});
+			if(!postgresEnv) {
+				var image = new Images({
+					namewithtimestamp: req.file.filename,
+					name: req.file.originalname,
+					path: req.protocol + "://" + req.get('host') + req.file.destination.slice(8) + req.file.filename,
+					albumname: req.file.destination.split('/')[3],
+					metadata: imgMetadata,
+				});
 
-			image.save(function(err, img) {
-				if(err) {
-					console.log(err);
-					return res.json({status: 0});
-				}
-				Albums.update({
-					name: req.file.destination.split('/')[3]
-				}, {
-					$push: {
-						images: img._id,
+				image.save(function(err, img) {
+					if(err) {
+						console.log(err);
+						return res.json({status: 0});
 					}
-				}, function(err2, result) {
-					if(err2) {
-						console.log(err2);
-					}
+					Albums.update({
+						name: req.file.destination.split('/')[3]
+					}, {
+						$push: {
+							images: img._id,
+						}
+					}, function(err2, result) {
+						if(err2) {
+							console.log(err2);
+						}
+					})
+					return res.json({status: 1, image: img});
 				})
-				return res.json({status: 1, image: img});
-			})
+			} else {
+				pool.query("INSERT INTO image (name, namewithtimestamp, path, albumname, metadata) VALUES ('"+req.file.originalname+"', '"+req.file.filename+"', '"+req.protocol + "://" + req.get('host') + req.file.destination.slice(8) + req.file.filename+"', '"+req.file.destination.split('/')[3]+"', '"+JSON.stringify(imgMetadata) +"'); SELECT CURRVAL(pg_get_serial_sequence('image','_id')) as _id", function(err, result) {
+					if(err) {
+						console.log(err);
+						return res.json({status: 0});
+					} else {
+						console.log(result.rows[0]._id);
+						var image = {
+							_id: result.rows[0]._id,
+							namewithtimestamp: req.file.filename,
+							name: req.file.originalname,
+							path: req.protocol + "://" + req.get('host') + req.file.destination.slice(8) + req.file.filename,
+							albumname: req.file.destination.split('/')[3],
+							metadata: imgMetadata,
+						};
+						return res.json({status: 1, image: image});
+					}
+				});
+			}
 		})
     });
 
@@ -155,60 +207,108 @@ module.exports = function(app) {
 		return res.render("albums");
 	});
 
-	app.get('/albums/get', function(req, res){
-		Albums.find({	
-		}).populate('images', 'path').exec(function(err, albums) {
-			if(err) {
-				console.log(err);
-				return res.json([]);
-			} 
-			console.log(albums);
-			return res.json(albums);
-		})
+	app.get('/albums/get', function(req, res) {
+		if(!postgresEnv) {
+			Albums.find({	
+			}).populate('images', 'path').exec(function(err, albums) {
+				if(err) {
+					console.log(err);
+					return res.json([]);
+				} 
+				console.log(albums);
+				return res.json(albums);
+			})
+		} else {
+			pool.query("SELECT album.name as name, COALESCE(json_agg(image) FILTER (WHERE image.path IS NOT NULL), '[]') as images FROM Albums album LEFT OUTER JOIN image image ON album.name = image.albumName GROUP BY album.name", function(err, result){
+				if(err) {
+					console.log(err);
+				} else {
+					console.log(JSON.parse(JSON.stringify(result.rows)));
+					return res.json(JSON.parse(JSON.stringify(result.rows)))
+				}
+			});
+		}
 	});
 
 	app.post('/albums/save', function(req, res){
-
-		var album = new Albums({
-			name: req.body.name,
-			createdAt: Date.now(),
-			images: [],
-		})
-		album.save(function(err, album){
-			if(err || !album) {
-				console.log(err);
-				return res.json({status: 0, err: err.message});
-			} else {
-				return res.json({status: 1, album: album});
-			}
-		})
+		if(!postgresEnv) {
+			var album = new Albums({
+				name: req.body.name,
+				createdAt: Date.now(),
+				images: [],
+			})
+			album.save(function(err, album){
+				if(err || !album) {
+					console.log(err);
+					return res.json({status: 0, err: err.message});
+				} else {
+					return res.json({status: 1, album: album});
+				}
+			});
+		} else {
+			pool.query("INSERT INTO Albums (name) VALUES ('"+req.body.name+"')", function(err, result){
+				if(err) {
+					console.log(err);
+					return res.json({status: 0, err: err});
+				} else {
+					var album = {};
+					album.name = req.body.name;
+					album.images = [];
+					return res.json({status: 1, album: album});
+				}
+			})
+		}
 	})
 
 	app.get('/:albumName/images', function(req, res) {
-		Albums.findOne({
-			name: req.params.albumName.toUpperCase(),
-		}, function(err, album) {
-			if(err || !album) {
-				console.log(err);
-				return res.send("There is no album named" + req.params.albumName + " exists!");
-			}
-			return res.render("image_viewer", {
-				albumName: req.params.albumName.toUpperCase(),
-			});
-		})
+		if(!postgresEnv) {
+			Albums.findOne({
+				name: req.params.albumName.toUpperCase(),
+			}, function(err, album) {
+				if(err || !album) {
+					console.log(err);
+					return res.send("There is no album named" + req.params.albumName + " exists!");
+				}
+				return res.render("image_viewer", {
+					albumName: req.params.albumName.toUpperCase(),
+				});
+			})
+		} else {
+			pool.query("SELECT * FROM Albums WHERE name = '" + req.params.albumName.toUpperCase() + "'", function(err, result){
+				if(err || !result.rows.length) {
+					console.log(err);
+					return res.send("There is no album named" + req.params.albumName + " exists!");
+				} else {
+					return res.render("image_viewer", {
+						albumName: req.params.albumName.toUpperCase(),
+					});
+				}
+			})
+		}
 	});
 
 	app.get('/images/get', function(req, res){
 		var albumName = req.query.album;
-		Images.find({
-			albumName: albumName
-		}, function(err, images){
-			if(err) {
-				console.log(err);
-				return res.json([]);
-			}
-			return res.json(images);
-		})
+		if(!postgresEnv) {
+			Images.find({
+				albumname: albumName
+			}, function(err, images){
+				if(err) {
+					console.log(err);
+					return res.json([]);
+				}
+				return res.json(images);
+			})
+		} else {
+			pool.query("SELECT * FROM image WHERE albumname = '" + albumName + "'", function(err, result){
+				if(err) {
+					console.log(err);
+				} else {
+					console.log(JSON.parse(JSON.stringify(result.rows)));
+					return res.json(JSON.parse(JSON.stringify(result.rows)));
+				}
+			});
+		}
 	})
 
 }

@@ -22,6 +22,8 @@ if(processArgs.indexOf('postgres') == -1) {
 			console.log('MongoDB Connection Established');
 		}
 	});
+} else {
+	require('./models/database.js');
 }
 
 app.set('port',  process.env.PORT || 3000);

@@ -5,7 +5,7 @@ var Image = require('./image.js');
 
 var AlbumSchema = new Schema({
 	name: {type: String, required: true, index: true, unique: true},
-	createdAt: {type: Date, default: Date.now()},
+	createdat: {type: Date, default: Date.now()},
 	images: [{type: ObjectId, ref: 'Image'}],
 });
 
